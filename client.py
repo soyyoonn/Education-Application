@@ -48,7 +48,6 @@ class Main(QMainWindow, form_class):
         self.client_socket.send(name)
         self.stackedWidget.setCurrentIndex(2)
         self.user_name.clear()
-        # self.chat_room_2.clear()
 
     def make_room(self):
         chat_room_name = self.chat_name.text()
@@ -63,17 +62,8 @@ class Main(QMainWindow, form_class):
         chat = self.chat_room_2.currentItem().text()
         data = self.sendmessage.text()
         datalist = f"['{senders_name}','{data}','{chat}']" # 송신자 , 메세지 , 채팅방
-        # a= eval(message)
-        # print(a)
-        # a
-        # ' 채팅중').encode()]
         message = datalist +"채팅중"
-        print(message)
         message = message.encode()
-        print(message)
-        print(message.decode())
-        # a = message.split('::')[0]
-        # print(a.decode())
         self.name.setText(f'{senders_name}')
         self.client_socket.send(message)
         self.sendmessage.clear()
@@ -110,8 +100,8 @@ class Main(QMainWindow, form_class):
         so.close()
 
 if __name__ == "__main__":
-    ip = '10.10.21.119'
-    port = 9060
+    ip = '10.10.21.111'
+    port = 9000
     app = QApplication(sys.argv)
     mainWindow = Main(ip, port)
     app.exec_()
