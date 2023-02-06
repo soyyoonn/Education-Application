@@ -17,16 +17,17 @@ class Student(QWidget, form_class):
         super().__init__()
         self.setupUi(self)
         self.show()
-        self.logyn = False
-        self.stackedWidget.setCurrentIndex(0)
+        self.stackedWidget.setCurrentIndex(1)
         self.initialize_socket(ip, port)
         self.listen_thread()
         self.join_btn.clicked.connect(self.join_page)
-        self.back_btn.clicked.connect(self.main_page)
+        # self.back_btn.clicked.connect(self.login_page)
         self.log_btn.clicked.connect(self.Login)
+        self.login_btn.clicked.connect(self.login_page)
 
-    def main_page(self):
+    def login_page(self):
         self.stackedWidget.setCurrentIndex(0)
+        self.login_btn.setText("로그아웃")
 
     def join_page(self):
         self.stackedWidget.setCurrentIndex(1)
@@ -35,7 +36,7 @@ class Student(QWidget, form_class):
         self.id = self.log_id.text()
         self.pw = self.log_pw.text()
         id = (self.id + '아이디').encode()
-        pw = (self.pw + '비밀번호').encode()
+        pw = (self.pw + '아이디').encode()
         self.client_socket.send(id)
         self.client_socket.send(pw)
         # self.id.clear()
