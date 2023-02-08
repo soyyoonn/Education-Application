@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>3</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="page_5">
     <widget class="QPushButton" name="btn_update">
@@ -102,9 +102,9 @@
     <widget class="QLabel" name="label">
      <property name="geometry">
       <rect>
-       <x>180</x>
+       <x>120</x>
        <y>70</y>
-       <width>171</width>
+       <width>121</width>
        <height>51</height>
       </rect>
      </property>
@@ -115,16 +115,16 @@
       </font>
      </property>
      <property name="text">
-      <string>문제 업데이트</string>
+      <string>문제 등록</string>
      </property>
     </widget>
     <widget class="QPushButton" name="btn_enter">
      <property name="geometry">
       <rect>
-       <x>820</x>
-       <y>650</y>
+       <x>910</x>
+       <y>490</y>
        <width>75</width>
-       <height>23</height>
+       <height>25</height>
       </rect>
      </property>
      <property name="text">
@@ -134,15 +134,15 @@
     <widget class="QTableWidget" name="quizupdatetable">
      <property name="geometry">
       <rect>
-       <x>180</x>
+       <x>120</x>
        <y>130</y>
-       <width>720</width>
-       <height>490</height>
+       <width>430</width>
+       <height>570</height>
       </rect>
      </property>
      <column>
       <property name="text">
-       <string>번호</string>
+       <string>종류</string>
       </property>
      </column>
      <column>
@@ -155,6 +155,11 @@
        <string>정답</string>
       </property>
      </column>
+     <column>
+      <property name="text">
+       <string>점수</string>
+      </property>
+     </column>
     </widget>
     <widget class="QPushButton" name="btn_home">
      <property name="geometry">
@@ -162,11 +167,80 @@
        <x>900</x>
        <y>30</y>
        <width>75</width>
-       <height>23</height>
+       <height>25</height>
       </rect>
      </property>
      <property name="text">
       <string>home</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="quizline">
+     <property name="geometry">
+      <rect>
+       <x>650</x>
+       <y>190</y>
+       <width>330</width>
+       <height>160</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="answerline">
+     <property name="geometry">
+      <rect>
+       <x>650</x>
+       <y>390</y>
+       <width>330</width>
+       <height>70</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="kindline">
+     <property name="geometry">
+      <rect>
+       <x>650</x>
+       <y>130</y>
+       <width>330</width>
+       <height>30</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_6">
+     <property name="geometry">
+      <rect>
+       <x>600</x>
+       <y>130</y>
+       <width>31</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>종류</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_7">
+     <property name="geometry">
+      <rect>
+       <x>600</x>
+       <y>390</y>
+       <width>31</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>정답</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="label_8">
+     <property name="geometry">
+      <rect>
+       <x>600</x>
+       <y>190</y>
+       <width>31</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>문제</string>
      </property>
     </widget>
    </widget>
@@ -223,10 +297,10 @@
     <widget class="QPushButton" name="btn_home2">
      <property name="geometry">
       <rect>
-       <x>920</x>
+       <x>900</x>
        <y>30</y>
        <width>75</width>
-       <height>23</height>
+       <height>25</height>
       </rect>
      </property>
      <property name="text">
@@ -290,10 +364,10 @@
     <widget class="QPushButton" name="btn_home3">
      <property name="geometry">
       <rect>
-       <x>920</x>
-       <y>40</y>
+       <x>900</x>
+       <y>30</y>
        <width>75</width>
-       <height>23</height>
+       <height>25</height>
       </rect>
      </property>
      <property name="text">
@@ -357,10 +431,10 @@
     <widget class="QPushButton" name="btn_home4">
      <property name="geometry">
       <rect>
-       <x>920</x>
+       <x>900</x>
        <y>30</y>
        <width>75</width>
-       <height>23</height>
+       <height>25</height>
       </rect>
      </property>
      <property name="text">
