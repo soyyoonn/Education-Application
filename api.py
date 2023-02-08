@@ -1,20 +1,146 @@
 import json
-import requests
-import xmltodict
+from socket import *
+from threading import *
+import sys
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+from PyQt5 import uic, QtGui
+from PyQt5 import QtWidgets
 
-# 인증키 저장
-key = "ChSbqD79l7f%2B6B7Cc%2Bh3iawn2a5Ic2JSHhuF65POk9l6%2BmtDlE84mg1xONFjCWZmyTNo8jC1paJXDiHc1%2FSOSg%3D%3D"
+form_class = uic.loadUiType('student.ui')[0]
 
-# 인증키 정보가 들어간 url 저장
-url = f'http://openapi.nature.go.kr/openapi/service/rest/InsectService/isctPrtctList?serviceKey=%7Bkey%7D'
+class Student(QWidget, form_class):
+    client_socket = None
+
+    def __init__(self, ip, port):
+        super().__init__()
+        self.setupUi(self)
+        self.stackedWidget.setCurrentIndex(1)
+        self.stackedWidget_2.setCurrentIndex(5)
+        self.show()
+        self.initialize_socket(ip, port)
+        self.listen_thread()
+        self.join_btn.clicked.connect(self.join_page)
+        self.log_btn.clicked.connect(self.Login)
+        self.login_btn.clicked.connect(self.login_page)
+        self.qna_btn.clicked.connect(self.QnA_page)
+        self.qna_send_btn.clicked.connect(self.QnA)
+        self.consult_btn.clicked.connect(self.Consult_page)
+        self.consult_send_btn.clicked.connect(self.Consult)
 
 
-content = requests.get(url).content                     # request 모듈을 이용해서 정보 가져오기(byte형태로 가져와지는듯)
-dict = xmltodict.parse(content)                         # xmltodict 모듈을 이용해서 딕셔너리화 & 한글화
-jsonString = json.dumps(dict, ensure_ascii=False)       # json.dumps를 이용해서 문자열화(데이터를 보낼때 이렇게 바꿔주면 될듯)
-jsonObj = json.loads(jsonString)                        # 데이터 불러올 때(딕셔너리 형태로 받아옴)
+    def Consult(self):
+        self.consult = self.consult_send.text()
+        consultor = (self.log + ":" + self.consult + ":" + 'consult').encode()
+        print(consultor.decode(),39)
+        self.client_socket.send(consultor)
+        self.consult_send.clear()
+    def Consult_page(self):
+        consult_page = ('consult_page').encode()
+        self.client_socket.send(consult_page)
+        self.stackedWidget_2.setCurrentIndex(4)
+    def QnA_page(self):
+        qna_page = ('QnA_page').encode()
+        self.client_socket.send(qna_page)
+        self.stackedWidget_2.setCurrentIndex(3)
 
-for item in jsonObj['response']['body']['items']['item']:
-    # print(item)
-    print(item['imgUrl'], item['insctFamilyNm'], item['insctOfnmScnm'],
-          item['insctPcmtt'], item['insctPilbkNo'], item['insctofnmkrlngnm'])
+    def QnA(self):
+        self.qna = self.qna_send.text()
+        print(self.qna,34)
+        qna = (self.log + ":" + self.qna + ":" + 'QnA').encode()
+        print(qna.decode(),36)
+        self.client_socket.send(qna)
+    def login_page(self):
+        self.stackedWidget.setCurrentIndex(0)
+        self.login_btn.setText("로그아웃")
+
+    def join_page(self):
+        self.stackedWidget.setCurrentIndex(1)
+
+    def Login(self):
+        self.id = self.log_id.text()
+        self.pw = self.log_pw.text()
+        id = (self.id +":" + self.pw + '로그인').encode()
+        self.client_socket.send(id)
+        self.receive_log(self.client_socket,)
+
+
+    def receive_log(self, so):
+        buf = so.recv(8192).decode()
+        print(buf)
+        if not buf:
+            pass
+        if buf[-3:] == '로그인':
+            self.log = buf[:-3]
+            QMessageBox.information(self,"로그인",f"{self.log}님 로그인 하셨습니다.")
+            self.stackedWidget.setCurrentIndex(1)
+            self.log_name.setText(f"{self.log}님 반갑습니다.")
+
+        elif buf == '오류':
+            log = buf
+            QMessageBox.critical(self, "오류", f"정보가 일치하지 않습니다.")
+
+    def receive_message(self, so):
+        while True:
+            buf = so.recv(8192).decode()
+            if not buf:
+                break
+            if buf[-12:] == 'consult_page':
+                self.consult_page = buf
+                self.con = json.loads(self.consult_page[:-12])
+                for i in range(len(self.con)):
+                    self.consultWidget.addItem(self.con[i][1] + ':' + self.con[i][2])
+            if buf[-8:] == 'QnA_page':
+                self.qna_page = buf
+                self.qq = json.loads(self.qna_page[:-8])
+                Row = 0
+                self.qna_tableWidget.setRowCount(len(self.qq))
+                for i in self.qq:
+                    self.qna_tableWidget.setItem(Row, 0, QTableWidgetItem(i[1]))  # 이름
+                    self.qna_tableWidget.setItem(Row, 1, QTableWidgetItem(i[2]))  # 내용
+                    self.qna_tableWidget.setItem(Row, 2, QTableWidgetItem(i[3]))  # 시간
+                    self.qna_tableWidget.setItem(Row, 3, QTableWidgetItem(i[4]))  # 답변여부
+                    Row += 1
+
+            if buf[-3:] == 'QnA':
+                print(buf)
+                self.qna_all_check = buf[:-3]
+                self.q = json.loads(self.qna_all_check)
+
+                Row = 0
+                self.qna_tableWidget.setRowCount(len(self.q))
+                for i in self.q:
+                    self.qna_tableWidget.setItem(Row, 0, QTableWidgetItem(i[1]))  # 이름
+                    self.qna_tableWidget.setItem(Row, 1, QTableWidgetItem(i[2]))  # 내용
+                    self.qna_tableWidget.setItem(Row, 2, QTableWidgetItem(i[3]))  # 시간
+                    self.qna_tableWidget.setItem(Row, 3, QTableWidgetItem(i[4]))  # 답변여부
+                    Row += 1
+
+            elif buf[-7:] == 'consult':
+                self.cons = buf[:-7]
+                print(self.cons)
+                self.consultWidget.addItem(str(self.cons))
+
+
+        so.close()
+
+
+    def initialize_socket(self, ip, port):
+        ''' tcp socket을 생성하고 server와 연결 '''
+        self.client_socket = socket(AF_INET, SOCK_STREAM)
+        remote_ip = ip
+        remote_port = port
+        self.client_socket.connect((remote_ip, remote_port))
+
+    def listen_thread(self):
+         ''' 데이터 수신 Thread를 생성하고 시작한다 '''
+         t = Thread(target=self.receive_message, args=(self.client_socket,), daemon=True)
+         t.start()
+
+
+if __name__ == "__main__":
+    ip = '10.10.21.119'
+    port = 9000
+    app = QApplication(sys.argv)
+    mainWindow = Student(ip, port)
+    app.exec_()

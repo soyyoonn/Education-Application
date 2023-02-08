@@ -5,6 +5,10 @@ from socket import *
 from threading import *
 from datetime import datetime
 import time
+import json
+
+from PyQt5.QtWidgets import QTableWidgetItem
+
 
 class MultiChatServer:
     # 소켓을 생성하고 연결되면 accept_client() 호출
@@ -38,93 +42,117 @@ class MultiChatServer:
                 now = datetime.now()
                 self.now_time = now.strftime('%Y-%m-%d %H:%M:%S')
                 incoming_message = c_socket.recv(256)
-
+                print(incoming_message.decode(),41)
                 if not incoming_message:  # 연결이 종료됨
                     break
             except:
                 continue
             else:
-                if incoming_message.decode()[-3:] == '아이디':
-                    id = incoming_message[:-3].decode()
-                    print(id)
+                if incoming_message.decode()[-3:] == '로그인':
                     id = incoming_message.decode()[:-3]
-                    print(id)
-                    # kk = eval(a)
-                    # print(kk)
+                    id_check = id.split(":")
+                    print(id_check, 55)
                     conn = ms.connect(host='10.10.21.111', port=3306, user='beom', password='123456789',
                                       db='yh',
                                       charset='utf8')
                     cursor = conn.cursor()
                     self.id = incoming_message.decode()[:-3]
-                    sql = f"INSERT INTO join (name,id,pw,nickname,tel,division) VALUES ('{kk[0]}:{kk[1]}',{'now()'},'{kk[2]}')"
+                    sql = f"SELECT * FROM yh.join where id = '{id_check[0]}' and pw = '{id_check[1]}'"
                     cursor.execute(sql)
-                    sql2 = f"SELECT * FROM CHAT"
-                    cursor.execute(sql2)
-                    conn.commit()
-                    self.chat_check = cursor.fetchall()
+                    self.log = cursor.fetchall()
+                    print(self.log, 70)
                     conn.close()
-                    self.final_received_message = kk[0] + " : " + kk[1] + "채팅중"
+                    if self.log != ():
+                        self.final_received_message = self.log[0][1] + "로그인"
+                        print(self.final_received_message,"gh")
+
+                    else:
+                        print('아이디가 없음')
+                        self.final_received_message = "오류"
                     self.send_all_clients(c_socket)
+                    c_socket.send(self.final_received_message.encode())
 
-                elif incoming_message.decode()[-3:] == '방번호':
-                    chat_room_name = incoming_message.decode()[:-3]
-
-                    conn = ms.connect(host='10.10.21.116', port=3306, user='talk_admin', password='admin1234',
-                                      db='talk',
+                elif incoming_message.decode()[-8:] == 'QnA_page':
+                    qna = incoming_message.decode()
+                    conn = ms.connect(host='10.10.21.111', port=3306, user='beom', password='123456789',
+                                      db='yh',
                                       charset='utf8')
                     cursor = conn.cursor()
-                    sql = f"SELECT message from chat where chat_room_name = '{chat_room_name}'"
+                    # self.qna = incoming_message.decode()
+                    sql = f"SELECT * FROM yh.qna"
                     cursor.execute(sql)
-                    self.room_name_check = cursor.fetchall()
-                    print(self.room_name_check)
+                    self.qna_page = cursor.fetchall()
                     conn.close()
-                    for x in self.room_name_check:
-                        time.sleep(0.001)
-                        self.final_received_message = x[0] + '방번호'
-                        # self.send_all_clients(c_socket)
-                        c_socket.send(self.final_received_message.encode())
+                    print(self.qna_page,87)
 
-                elif incoming_message.decode()[-5:] == '채팅방만듬':
-
-                    conn = ms.connect(host='10.10.21.116', port=3306, user='talk_admin', password='admin1234',
-                                      db='talk',
+                    if self.qna_page != ():
+                        print(self.qna_page,156)
+                        self.qq = json.dumps(self.qna_page) + "QnA_page"
+                        c_socket.send(self.qq.encode())
+                elif incoming_message.decode()[-12:] == 'consult_page':
+                    # consult = incoming_message.decode()
+                    # print(consult)
+                    conn = ms.connect(host='10.10.21.111', port=3306, user='beom', password='123456789',
+                                      db='yh',
                                       charset='utf8')
                     cursor = conn.cursor()
-                    self.room_name = incoming_message.decode()[:-5]
-                    sql = f"INSERT INTO room (name) VALUES ('{self.room_name}')"
+                    # self.qna = incoming_message.decode()
+                    sql = f"SELECT * FROM yh.consult"
+                    cursor.execute(sql)
+                    self.consult_page = cursor.fetchall()
+                    conn.close()
+                    print(self.consult_page,104)
+
+                    if self.consult_page != ():
+                        self.consult_page_check = json.dumps(self.consult_page) + "consult_page"
+                        c_socket.send(self.consult_page_check.encode())
+
+
+                elif incoming_message.decode()[-3:] == 'QnA':
+                    qna = incoming_message.decode()[:-3]
+                    self.qna_check = qna.split(":")
+                    conn = ms.connect(host='10.10.21.111', port=3306, user='beom', password='123456789',
+                                      db='yh',
+                                      charset='utf8')
+                    cursor = conn.cursor()
+                    self.qna = incoming_message.decode()[:-3]
+                    sql = f"INSERT INTO yh.qna (name, qna, time) VALUES ('{self.qna_check[0]}','{self.qna_check[1]}',{'now()'})"
                     cursor.execute(sql)
                     conn.commit()
-                    sql = f"SELECT * from room where name ='{self.room_name}'"
+                    # sql = f"SELECT * FROM yh.qna where name = '{self.qna_check[0]}'"
+                    sql = f"SELECT * FROM yh.qna"
                     cursor.execute(sql)
-                    self.room_check = cursor.fetchall()
-                    print(self.room_check)
+                    self.qna_all_check = cursor.fetchall()
                     conn.close()
-                    for x in self.room_check:
-                        print(x)
-                        time.sleep(0.001)
-                        self.final_received_message = x[1] + '채팅방만듬'
+
+                    if self.qna_all_check != ():
+                        print(self.qna_all_check,156)
+                        self.q = json.dumps(self.qna_all_check) + "QnA"
+                        c_socket.send(self.q.encode())
+                        # self.send_all_clients(c_socket)
+
+                elif incoming_message.decode()[-7:] == 'consult':
+                    consult = incoming_message.decode()[:-7]
+                    self.consult = consult.split(":")
+                    conn = ms.connect(host='10.10.21.111', port=3306, user='beom', password='123456789',
+                                      db='yh',
+                                      charset='utf8')
+                    cursor = conn.cursor()
+                    # self.consult = incoming_message.decode()[:-7]
+                    sql = f"INSERT INTO yh.consult (name, content, time) VALUES ('{self.consult[0]}','{self.consult[1]}',{'now()'})"
+                    cursor.execute(sql)
+                    conn.commit()
+                    sql = f"SELECT * FROM yh.consult where name = '{self.consult[0]}'"
+                    cursor.execute(sql)
+                    self.consult_check = cursor.fetchall()
+                    conn.close()
+                    i = self.consult_check
+                    if self.consult_check != ():
+                        cons = self.consult_check
+                        for i in cons:
+                            self.final_received_message = i[1] + ':' + i[2] + "consult"
                         self.send_all_clients(c_socket)
 
-                elif incoming_message.decode()[-2:] == '입장':
-
-                    conn = ms.connect(host='10.10.21.116', port=3306, user='talk_admin', password='admin1234',
-                                      db='talk',
-                                      charset='utf8')
-                    cursor = conn.cursor()
-                    self.join_name = incoming_message.decode()[:-2]
-                    sql = f"INSERT INTO member (uname) VALUES ('{self.join_name}')"
-                    cursor.execute(sql)
-                    conn.commit()
-                    sql = f"SELECT * from room"
-                    cursor.execute(sql)
-                    self.join_check = cursor.fetchall()
-                    conn.close()
-                    for x in self.join_check:
-                        print(x)
-                        time.sleep(0.001)
-                        self.final_received_message = x[1] + '채팅방만듬'
-                        c_socket.send(self.final_received_message.encode())
-                        # self.send_all_clients(c_socket)
         c_socket.close()
 
 
@@ -133,6 +161,7 @@ class MultiChatServer:
     def send_all_clients(self, senders_socket):
         for client in self.clients: # 목록에 있는 모든 소켓에 대해
             socket, (ip, port) = client
+            # if socket is not senders_socket:  # 송신 클라이언트는 제외
             try:
                 socket.sendall(self.final_received_message.encode())
             except:  # 연결 종료
