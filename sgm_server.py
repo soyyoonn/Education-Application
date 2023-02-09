@@ -12,11 +12,12 @@ from PyQt5.QtWidgets import *
 class MultiChatServer:
     # 소켓을 생성하고 연결되면 accept_client() 호출
     def __init__(self):
-        self.clients = []  # 접속된 클라이언트 소켓 목록
+        self.clients = []    # 접속된 클라이언트 소켓 목록
+        self.userlist = []   # 접속자 리스트
         self.final_received_message = ""  # 최종 수신 메시지
         self.s_sock = socket(AF_INET, SOCK_STREAM)
         self.ip = '10.10.21.101'
-        self.port = 9180
+        self.port = 9100
         self.s_sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.s_sock.bind((self.ip, self.port))
         print("클라이언트 대기 중...")
@@ -65,7 +66,9 @@ class MultiChatServer:
                     if self.log != ():
                         self.final_received_message = self.log[0][1] + "로그인"
                         print(self.final_received_message,"gh")
-
+                        print(self.log, 898989898)
+                        self.userlist.append(self.log[0][1])
+                        print(self.userlist,5656)
                     else:
                         print('아이디가 없음')
                         self.final_received_message = "오류"
@@ -145,11 +148,11 @@ class MultiChatServer:
                     self.consult_check = cursor.fetchall()
                     conn.close()
                     i = self.consult_check
-                    if self.consult_check != ():
-                        cons = self.consult_check
-                        for i in cons:
-                            self.final_received_message = i[1] + ':' + i[2] + "consult"
-                        self.send_all_clients(c_socket)
+                    cons = self.consult_check
+                    for i in cons:
+                        self.final_received_message = i[1] + ':' + i[2] + "consult"
+                    print(self.final_received_message, 7777777)
+                    self.send_all_clients(c_socket)
 
                 elif self.incoming_message[-1] == '000':
                     print(self.incoming_message, 3564231)
@@ -182,18 +185,20 @@ class MultiChatServer:
                     c_socket.sendall((qna_answer + '답변').encode())
                     conn.close()
 
-                # elif self.incoming_message[-1] == '100': # 상담 채팅
-                #     now = datetime.now()
-                #     self.now_time = now.strftime('%Y-%m-%d %H:%M:%S')
-                #     self.m = self.final_received_message.split(':')
-                #     print(self.m)
-                #     conn = ms.connect(host='10.10.21.111', port=3306, user='chat', password='0000', db='network')
-                #     cursor = conn.cursor()
-                #     # DB에 데이터 저장
-                #     cursor.execute(
-                #         f"INSERT INTO chat (send, message, time, IP, PORT, roomname) VALUES('{self.m[0]}','{self.m[1]}', '{self.now_time}','{self.add[0]}','{self.add[1]}','{self.m[2]}')")
-                #     conn.commit()
-                #     conn.close()
+                elif self.incoming_message[-1] == '100':  # 상담
+                    now = datetime.now()
+                    self.now_time = now.strftime('%Y-%m-%d %H:%M:%S')
+                    teacher = self.incoming_message[0]
+                    message = self.incoming_message[1]
+                    conn = ms.connect(host='10.10.21.111', port=3306, user='beom', password='123456789', db='yh', charset='utf8')
+                    cursor = conn.cursor()
+                    # DB에 데이터 저장
+                    cursor.execute(
+                        f"INSERT INTO yh.consult (name, content, time) VALUES('{teacher}','{message}','{self.now_time}')")
+                    conn.commit()
+                    conn.close()
+                    self.final_received_message = (teacher + ':' + message + 'consult')
+                    self.send_all_clients(c_socket)
 
                 elif self.incoming_message[-1] == '문제등록':
                     print(self.incoming_message, 2222233333)
@@ -202,12 +207,12 @@ class MultiChatServer:
                     answer = self.incoming_message[2]
                     points = self.incoming_message[3]
                     conn = ms.connect(host='10.10.21.111', port=3306, user='beom', password='123456789',
-                                      db='sy_sgm', charset='utf8')
+                                      db='yh', charset='utf8')
                     cursor = conn.cursor()
-                    sql = f"INSERT INTO sy_sgm.quiz_update (kind, quiz, answer, points) VALUES ('{kind}','{quiz}','{answer}','{points}')"
+                    sql = f"INSERT INTO yh.quiz (kind, quiz, solution, points) VALUES ('{kind}','{quiz}','{answer}','{points}')"
                     cursor.execute(sql)
                     conn.commit()
-                    sql = f"SELECT * FROM sy_sgm.quiz_update"
+                    sql = f"SELECT * FROM yh.quiz"
                     cursor.execute(sql)
                     self.update = cursor.fetchall()
                     print(self.update, 152555555)
@@ -215,7 +220,9 @@ class MultiChatServer:
                     c_socket.sendall((quiz_update + '문제등록').encode())
                     conn.close()
 
-
+                elif self.incoming_message[-1] == '접속자':
+                    user = json.dumps(self.userlist)
+                    c_socket.sendall((user + '접속자').encode())
 
         c_socket.close()
 
@@ -225,6 +232,7 @@ class MultiChatServer:
             socket, (ip, port) = client
             try:
                 socket.sendall(self.final_received_message.encode())
+                print(self.clients, 878787878)
             except:  # 연결 종료
                 self.clients.remove(client)   # 소켓 제거
                 print("{}, {} 연결이 종료되었습니다".format(ip, port))

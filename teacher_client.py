@@ -30,6 +30,8 @@ class Main(QMainWindow, form_class):
         self.btn_send.clicked.connect(self.send_chat)
         self.sendline.returnPressed.connect(self.send_chat)
         self.qnatable.cellChanged.connect(self.send_qna)
+        self.qnatable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.quizupdatetable.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
 
     def move_home(self):
         self.stackedWidget.setCurrentIndex(0)
@@ -48,6 +50,9 @@ class Main(QMainWindow, form_class):
 
     def move_chat(self):
         self.stackedWidget.setCurrentIndex(4)
+        user = ['접속자']
+        userlist = json.dumps(user)
+        self.client_socket.send(userlist.encode())
 
     def chat_out(self):
         self.stackedWidget.setCurrentIndex(0)
@@ -90,9 +95,10 @@ class Main(QMainWindow, form_class):
         # message = ('교사' + ':' + data + ':' + '100').encode()  # 서버로 보낼 메시지
         message = ['교사', data, '100']
         msg = json.dumps(message)
-        self.client_socket.send(msg)  # 서버로 전송
+        self.client_socket.send(msg.encode())  # 서버로 전송
         self.sendline.clear()  # 메시지 보내는 창 클리어
-        return 'break'
+        # return 'break'
+
 
     def listen_thread(self):
         ''' 데이터 수신 Thread를 생성하고 시작한다 '''
@@ -122,10 +128,10 @@ class Main(QMainWindow, form_class):
                         Row += 1
 
                 elif msg[-2:] == '답변':
-                    self.answer_check = json.loads(msg[:-2])
-                    print(self.answer_check, 1561231)
+                    answer_check = json.loads(msg[:-2])
+                    print(answer_check, 1561231)
                     Row = 0
-                    self.qnatable.setRowCount(len(self.answer_check))
+                    self.qnatable.setRowCount(len(answer_check))
                     for i in self.q:
                         self.qnatable.setItem(Row, 0, QTableWidgetItem(str(i[0])))  # 번호
                         self.qnatable.setItem(Row, 1, QTableWidgetItem(i[1]))       # 학생
@@ -134,11 +140,11 @@ class Main(QMainWindow, form_class):
                         Row += 1
 
                 elif msg[-4:] == '문제등록':
-                    self.quiz_update = json.loads(msg[:-4])
-                    print(self.quiz_update, 999)
+                    update = json.loads(msg[:-4])
+                    print(update, 999)
                     Row = 0
-                    self.quizupdatetable.setRowCount(len(self.quiz_update))
-                    for i in self.quiz_update:
+                    self.quizupdatetable.setRowCount(len(update))
+                    for i in update:
                         self.quizupdatetable.setItem(Row, 0, QTableWidgetItem(i[1]))  # 종류
                         self.quizupdatetable.setItem(Row, 1, QTableWidgetItem(i[2]))  # 문제
                         self.quizupdatetable.setItem(Row, 2, QTableWidgetItem(i[3]))  # 정답
@@ -147,6 +153,23 @@ class Main(QMainWindow, form_class):
                     self.kindline.clear()
                     self.quizline.clear()
                     self.answerline.clear()
+
+                elif msg[-7:] == 'consult':
+                    print(msg,5748956)
+                    msg = msg[:-7]
+                    if self.namebox.currentText() in msg:
+                        self.chatlist.addItem(msg)  # 채팅창에 메시지 추가
+                    elif '교사' in msg:
+                        self.chatlist.addItem(msg)
+                    self.chatlist.scrollToBottom()
+
+                elif msg[-3:] == '접속자':
+                    self.namebox.clear()
+                    userlist = json.loads(msg[:-3])
+                    print(userlist, 98989898)
+                    for i in range(len(userlist)):
+                        self.namebox.addItem(userlist[i])
+
             except:
                 pass
         so.close()
@@ -154,7 +177,7 @@ class Main(QMainWindow, form_class):
 
 if __name__ == "__main__":
     ip = '10.10.21.101'
-    port = 9180
+    port = 9100
     app = QApplication(sys.argv)
     mainWindow = Main(ip, port)
     widget = QtWidgets.QStackedWidget()
