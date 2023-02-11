@@ -14,7 +14,7 @@ class MultiChatServer:
         self.final_received_message = ""   # 최종 수신 메시지
         self.s_sock = socket(AF_INET, SOCK_STREAM)
         self.ip ='10.10.21.101'
-        self.port = 9180
+        self.port = 9000
         self.s_sock.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         self.s_sock.bind((self.ip, self.port))
         print("클라이언트 대기 중...")
@@ -43,6 +43,7 @@ class MultiChatServer:
                     break
             except:
                 continue
+
             else:
                 self.incoming_message = incoming_message.decode()
 
@@ -59,25 +60,26 @@ class MultiChatServer:
                     c_socket.sendall((qnalist + '000').encode())  # 클라이언트에 전송
 
                 elif self.incoming_message[-3:] == ':답변':
-                    try:
-                        answer = self.incoming_message.split(":")[0]
-                        conn = ms.connect(host='10.10.21.111', port=3306, user='beom', password='123456789',
-                                          db='yh', charset='utf8')
-                        cursor = conn.cursor()
-                        sql = f"UPDATE yh.join SET respond={answer} WHERE respond = 'N', name ='{self.qnalist[1]}' "
-                        cursor.execute(sql)
-                        conn.commit()
-                        sql = f"SELECT * FROM yh.qna where name = '{self.qnalist[1]}'"
-                        cursor.execute(sql)
-                        self.qna_answer= cursor.fetchall()
-                        print(self.qna_answer, 152)
-                        conn.close()
-                        qna_answer = json.dumps(self.qna_answer)
-                        c_socket.sendall((qna_answer + ':답변').encode())
-                        conn.close()
+                    # try:
+                    number = self.incoming_message.split(":")[0]
+                    answer = self.incoming_message.split(":")[1]
+                    conn = ms.connect(host='10.10.21.111', port=3306, user='beom', password='123456789',
+                                      db='yh', charset='utf8')
+                    cursor = conn.cursor()
+                    sql = f"UPDATE yh.qna SET respond={answer} WHERE respond = 'N' and num ='{number}' "
+                    cursor.execute(sql)
+                    conn.commit()
+                    sql = f"SELECT * FROM yh.qna where num = '{number}'"
+                    cursor.execute(sql)
+                    self.qna_answer= cursor.fetchall()
+                    print(self.qna_answer, 152)
+                    qna_answer = json.dumps(self.qna_answer)
+                    c_socket.sendall((qna_answer + ':답변').encode())
+                    conn.close()
 
-                    except:
-                        pass
+                # self.send_all_clients(c_socket)
+                    # except:
+                    #     pass
         c_socket.close()
 
 
